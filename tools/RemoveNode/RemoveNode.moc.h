@@ -27,6 +27,7 @@ class ChannelsLists : public QListWidget
 
     void update();
     void destroy();
+
     static int WidgetCallback(void* closure, DD::Image::Knob::CallbackReason reason);
 
   public Q_SLOTS:

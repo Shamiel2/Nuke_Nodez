@@ -8,6 +8,7 @@
 #include <QTabWidget>
 #include <QCheckBox>
 #include <string>
+#include <QObject>
 
 
 #include <sstream>
@@ -65,27 +66,55 @@ QVector<QPair<QCheckBox*, bool>> findAllCheckBoxesWithState(ChannelsLists* chann
 
 
 
+// class CustomChannelKnob : public DD::Image::Knob
+// {
+//   friend class ChannelsLists;
+//   int _data;
+// public:
+//   CustomChannelKnob(DD::Image::Knob_Closure* kc, int* data, const char* n) : Knob(kc, n)
+//   {
+//     _data = 0;
+//     if ( data )
+//       _data = *data;
+//   }
+
+//   virtual const char* Class() const { return "CustomChannelKnob"; }
+//   virtual bool not_default () const { return _data != 0; }
+
+//   // THis adds the custom knob to the nuke panel
+//   virtual WidgetPointer make_widget(const DD::Image::WidgetContext& context)
+//   {
+//     ChannelsLists* widget = new ChannelsLists( this );
+//     return widget;
+//   }
+// };
+
 class CustomChannelKnob : public DD::Image::Knob
 {
   friend class ChannelsLists;
   int _data;
+  ChannelsLists* _widget; // Add a member variable to store the ChannelsLists widget
+
 public:
-  CustomChannelKnob(DD::Image::Knob_Closure* kc, int* data, const char* n) : Knob(kc, n)
+  CustomChannelKnob(DD::Image::Knob_Closure* kc, int* data, const char* n) : Knob(kc, n), _widget(nullptr)
   {
     _data = 0;
-    if ( data )
+    if (data)
       _data = *data;
   }
 
   virtual const char* Class() const { return "CustomChannelKnob"; }
-  virtual bool not_default () const { return _data != 0; }
+  virtual bool not_default() const { return _data != 0; }
 
-  // THis adds the custom knob to the nuke panel
+  // This adds the custom knob to the Nuke panel
   virtual WidgetPointer make_widget(const DD::Image::WidgetContext& context)
   {
-    ChannelsLists* widget = new ChannelsLists( this );
-    return widget;
+    _widget = new ChannelsLists(this); // Store the created ChannelsLists instance
+    return _widget;
   }
+
+  // Getter for the ChannelsLists widget
+  ChannelsLists* widget() const { return _widget; }
 };
 
 
@@ -101,10 +130,16 @@ ChannelsLists::ChannelsLists(CustomChannelKnob* knob) : _knob(knob)
   QCheckBox* checkbox = new QCheckBox();
   checkbox->setText("Channel Name");
 
+  QCheckBox* checkbox2 = new QCheckBox();
+  checkbox2->setText("Test Name");
+
+
+
   // // Create a widget that will be the viewport
   QWidget* viewportWidget = new QWidget();
 
   layout->addWidget(checkbox);
+  layout->addWidget(checkbox2);
 
   // std::cout << "Testing Channellist: " << std::endl;
 
@@ -509,11 +544,6 @@ int FilterPanel::WidgetCallback(void* closure, Knob::CallbackReason reason)
 
 
 
-
-
-
-
-
 /// @brief ///////////////////////////////////////////
 /// MAIN NUKE NODE CLASS FOR EVERYTHING NUKE RELATED
 
@@ -537,64 +567,8 @@ class RemoveNode : public PixelIop
   const char* Class() const { return d.name; }
   const char* node_help() const { return HELP; }
   void _validate(bool);
+  void printUncheckedCheckboxes(QLayout* layout);
 };
-
-
-
-void RemoveNode::_validate(bool for_real)
-{
-  Knob* channel_knob = knob("channels_list");
-  std::cout << "Name: " << channel_knob << std::endl;
-  std::cout << "Flags: " << channel_knob->flags() << std::endl;
-  std::cout << "Node: " << channel_knob->node() << std::endl;
-  std::cout << "Node: " << channel_knob->addCallback(ChannelsLists(this)) << std::endl;
-
-
-
-
-
-
-
-
-  // QListWidget* channels = knob("channels_list");
-
-  // // Deduce the return type of input0().channels()
-  // using ChannelsReturnType = decltype(_channelsList);
-
-  // // Get the type name at runtime
-  // std::cout << "Data type of input0().channels(): " << typeid(ChannelsReturnType).name() << std::endl;
-
-
-  // // Create a QVBoxLayout
-  // QVBoxLayout* layout = new QVBoxLayout();
-  // // Create a QVBoxLayout
-  // QCheckBox* checkbox = new QCheckBox();
-  // checkbox->setText("Channel Name");
-
-  // // Create a widget that will be the viewport
-  // QWidget* viewportWidget = new QWidget();
-
-  // channel_knob->makeWidget(checkbox);
-
-  // std::cout << "Testing Channellist: " << std::endl;
-
-  // // Set the layout for the viewport
-  // viewportWidget->setLayout(layout);
-
-  // // Set the viewport of the QListWidget
-  // channel_knob.setViewport(viewportWidget);
-
-
-
-
-  std::cout << "KNob Tet: " << channel_knob << std::endl;
-  std::cout << "Validating: " << input0().channels() << std::endl;
-  set_out_channels(input0().channels());
-  copy_info();
-
-}
-
-void RemoveNode::pixel_engine(const Row& in, int y, int x, int r, ChannelMask channels, Row& out){}
 
 void RemoveNode::knobs(Knob_Callback f)
 {
@@ -604,6 +578,60 @@ void RemoveNode::knobs(Knob_Callback f)
   CustomKnob1(FilterKnob, f, &_value, "");
   CustomKnob1(CustomChannelKnob, f, &_value, "channels_list"); // Store the pointer to ChannelsLists
 }
+
+
+void RemoveNode::_validate(bool for_real)
+{
+
+  // Retrieve the CustomChannelKnob instance
+  CustomChannelKnob* customKnob = dynamic_cast<CustomChannelKnob*>(knob("channels_list"));
+  if (!customKnob) {
+    std::cerr << "CustomChannelKnob not found!" << std::endl;
+    return;
+  }
+
+  // Access the ChannelsLists widget associated with the CustomChannelKnob
+  ChannelsLists* channelsList = customKnob->widget(); // Use the new widget() method
+  if (!channelsList) {
+    std::cerr << "ChannelsLists widget not found!" << std::endl;
+    return;
+  }
+
+  // Access the layout of the ChannelsLists widget
+  QWidget* viewportWidget = channelsList->viewport();
+  QLayout* layout = viewportWidget->layout();
+  if (!layout) {
+    std::cerr << "Layout not found in ChannelsLists viewport!" << std::endl;
+    return;
+  }
+
+  // Clear the layout by removing all widgets
+  while (QLayoutItem* item = layout->takeAt(0)) {
+    if (QWidget* widget = item->widget()) {
+        widget->deleteLater(); // Schedule the widget for deletion
+    }
+    delete item; // Delete the layout item
+  }
+
+  // Iterate through the input channels and add a QCheckBox for each channel
+  ChannelSet inputChannels = input0().channels();
+  for (Channel channel : inputChannels) {
+    QCheckBox* newCheckBox = new QCheckBox("channelName");
+    layout->addWidget(newCheckBox);
+  }
+
+  std::cout << "Added QCheckBox widgets for all input channels." << std::endl;
+
+  // Perform other validation tasks
+  set_out_channels(input0().channels());
+  copy_info();
+}
+
+
+void RemoveNode::pixel_engine(const Row& in, int y, int x, int r, ChannelMask channels, Row& out){
+}
+
+
 
 
 static Iop* build(Node* node) { return new RemoveNode(node); }

@@ -15,6 +15,7 @@ class CustomChannelKnob;
 class KeepAllKnob;
 class RemoveAllKnob;
 class FilterKnob;
+class CheckBoxKnob;
 
 /// QLISTWIDGET That displays the channels
 class ChannelsLists : public QListWidget

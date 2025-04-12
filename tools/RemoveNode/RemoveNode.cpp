@@ -57,38 +57,6 @@ QVector<QPair<QCheckBox*, bool>> findAllCheckBoxesWithState(ChannelsLists* chann
 
 
 
-
-
-
-
-
-
-
-
-
-// class CustomChannelKnob : public DD::Image::Knob
-// {
-//   friend class ChannelsLists;
-//   int _data;
-// public:
-//   CustomChannelKnob(DD::Image::Knob_Closure* kc, int* data, const char* n) : Knob(kc, n)
-//   {
-//     _data = 0;
-//     if ( data )
-//       _data = *data;
-//   }
-
-//   virtual const char* Class() const { return "CustomChannelKnob"; }
-//   virtual bool not_default () const { return _data != 0; }
-
-//   // THis adds the custom knob to the nuke panel
-//   virtual WidgetPointer make_widget(const DD::Image::WidgetContext& context)
-//   {
-//     ChannelsLists* widget = new ChannelsLists( this );
-//     return widget;
-//   }
-// };
-
 class CustomChannelKnob : public DD::Image::Knob
 {
   friend class ChannelsLists;
@@ -450,100 +418,6 @@ int RemoveAllButton::WidgetCallback(void* closure, Knob::CallbackReason reason)
 
 
 
-
-//////////////////////////////////////////////////////////////////////////////////////
-//                      UNCHECK ALL BUTTON                                          //
-//////////////////////////////////////////////////////////////////////////////////////
-class FilterKnob : public DD::Image::Knob
-{
-  friend class FilterPanel;
-  int _data;
-public:
-  FilterKnob(DD::Image::Knob_Closure* kc, int* data, const char* n) : Knob(kc, n)
-  {
-    _data = 0;
-    if ( data )
-      _data = *data;
-  }
-
-  virtual const char* Class() const { return "FilterKnob"; }
-  virtual bool not_default () const { return _data != 0; }
-
-  // THis adds the custom knob to the nuke panel
-  virtual WidgetPointer make_widget(const DD::Image::WidgetContext& context)
-  {
-    FilterPanel* widget = new FilterPanel( this );
-    return widget;
-  }
-};
-
-
-FilterPanel::FilterPanel(FilterKnob* knob) : _knob(knob)
-{
-  // Sets all the Knob Properties and or Flags
-  _knob->addCallback(WidgetCallback, this);
-  setPlaceholderText("Filter your remove or keep search...");
-  setToolTip(
-    "Filter the channels list by typing in the search box.\n"
-    "If you want to search for channels starting with a word using *Channel_name eg *Beauty this will look for all channels starting with Beauty.\n"
-    "If you want to search for channels ending with a using Channel_name* eg Beauty* this will look for all channels ending with Beauty");
-  // setMinimumSize(btn_min_width, btn_min_height);
-};
-
-
-FilterPanel::~FilterPanel()
-{
-  if ( _knob )
-    _knob->removeCallback( WidgetCallback, this );
-}
-
-void FilterPanel::valueChanged(int value)
-{
-  std::cout << "valueChanged" << std::endl;
-  // _knob->setValue( value );
-}
-
-
-
-int FilterPanel::WidgetCallback(void* closure, Knob::CallbackReason reason)
-{
-  // could double check if on main thread here just in case and bail out
-  // if not
-  FilterPanel* widget = (FilterPanel*)closure;
-  assert(widget);
-  switch (reason) {
-    case Knob::kIsVisible:
-      {
-        // We check for visibility up to the containing tab widget.
-        // This means that a widget is still considered visible when its NodePanel is hidden due to being in hidden tab in a dock.
-
-        for (QWidget* w = widget->parentWidget(); w; w = w->parentWidget())
-          if (qobject_cast<QTabWidget*>(w))
-            return widget->isVisibleTo(w);
-        return widget->isVisible();
-      }
-
-    // case Knob::kUpdateWidgets:
-    //   widget->update();
-    //   return 0;
-
-    // case Knob::kDestroying:
-    //   widget->destroy();
-    //   return 0;
-
-    default:
-      return 0;
-  }
-}
-
-
-
-
-
-
-
-
-
 /// @brief ///////////////////////////////////////////
 /// MAIN NUKE NODE CLASS FOR EVERYTHING NUKE RELATED
 
@@ -575,7 +449,7 @@ void RemoveNode::knobs(Knob_Callback f)
   // a custom knob with custom data
   CustomKnob1(KeepAllKnob, f, &_value, "check_all_button");
   CustomKnob1(RemoveAllKnob, f, &_value, "uncheck_all_button");
-  CustomKnob1(FilterKnob, f, &_value, "");
+  ClearFlags(f, Knob::STARTLINE);
   CustomKnob1(CustomChannelKnob, f, &_value, "channels_list"); // Store the pointer to ChannelsLists
 }
 
@@ -616,7 +490,7 @@ void RemoveNode::_validate(bool for_real)
   // Iterate through the input channels and add a QCheckBox for each channel
   ChannelSet inputChannels = input0().channels();
   for (Channel channel : inputChannels) {
-    QCheckBox* newCheckBox = new QCheckBox("channelName");
+    QCheckBox* newCheckBox = new QCheckBox("Test Name");
     layout->addWidget(newCheckBox);
   }
 

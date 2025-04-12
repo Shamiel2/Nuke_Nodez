@@ -81,25 +81,3 @@ class RemoveAllButton : public QPushButton
     RemoveAllKnob* _knob;
 };
 
-
-
-/// UNCHECK ALL BUTTON
-class FilterPanel : public QLineEdit
-{
-  Q_OBJECT
-
-  public:
-    FilterPanel(FilterKnob* knob);
-    ~FilterPanel();
-
-    void update();
-    void destroy();
-    static int WidgetCallback(void* closure, DD::Image::Knob::CallbackReason reason);
-
-  public Q_SLOTS:
-    void valueChanged(int value);
-
-  private:
-    FilterKnob* _knob;
-};
-

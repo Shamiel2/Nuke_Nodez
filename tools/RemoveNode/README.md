@@ -12,4 +12,19 @@ Current WIP node layout `This is subject to change and improvements`
 # Requirments
 - cmake 3.10 or later
 - Nuke 15.x (`built against this version`)
-- Qt Binaries
+- Qt Binaries ( Download [here](https://www.foundry.com/products/nuke-family/developers) )
+    - Download the Binary for your OS and Nuke version, not the source file link.
+ 
+
+# Build
+```
+git clone https://github.com/Shamiel2/Nuke_Nodez.git
+```
+` NOTE: In the CMakeLists you will need to change the `Qt5_DIR` to where you downloaded yours, the default path is "./Qt/lib/cmake/Qt5" `
+
+```
+cd Nuke_Nodez/tools/RemoveNode
+mkdir build && cd build
+cmake ..
+cmake --build . --config Release
+```

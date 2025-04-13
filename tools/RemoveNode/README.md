@@ -12,4 +12,4 @@ Current WIP node layout `This is subject to change and improvements`
 # Requirments
 - cmake 3.10 or later
 - Nuke 15.x (`built against this version`)
-- Qt5 Binaries
+- Qt Binaries

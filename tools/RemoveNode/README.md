@@ -6,4 +6,10 @@ This is a experimental new take on the Foundry Nuke `Remove Node`, the issue I h
 
 Current WIP node layout `This is subject to change and improvements`
 
-![Screenshot 2025-03-20 104421](https://github.com/user-attachments/assets/51430a57-9135-400a-98c2-c4574f3b7bc5)
+![image](https://github.com/user-attachments/assets/1d37ed1f-5a04-470a-932e-08013c25f036)
+
+
+# Requirments
+- cmake 3.10 or later
+- Nuke 15.x (`built against this version`)
+- Qt5 Binaries
